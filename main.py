@@ -1,6 +1,7 @@
 import itertools
 from decimal import *
 
+
 class Path:
 
     source = None
@@ -86,9 +87,8 @@ def check_transmission_success(all_paths, route, link_failure_combination):
 
     # Sanity check
     if len(link_failure_combination) != len(route):
-        return False
+        return []
 
-    result = False
     map = {}
 
     # Create a mapping from route to combination
@@ -97,15 +97,17 @@ def check_transmission_success(all_paths, route, link_failure_combination):
 
 
     # !
-    for m in map:
-        print(str(m) + ':' + str(map[m]))
+    # for m in map:
+    #     print(str(m) + ':' + str(map[m]))
     # !
+
+    success_paths = []
 
     # ======================
     # For each path from source to destination
     # ======================
     for path in all_paths:
-
+        success_paths.append([])
         # ======================
         # For each link in this particular path
         # ======================
@@ -114,17 +116,13 @@ def check_transmission_success(all_paths, route, link_failure_combination):
             if m is not None: # sanity check
 
                 if m == 0: # if link fails
-                    result = False # transmission failed at this link
+                    success_paths = success_paths[:-1]  # reset path since this one does not work
                     break # break the loop, a transmission fails as long as one link of the path fails
 
                 elif m == 1: # if the link does not fail
-                    result = True # transmission is correct until now, but might not remain correct along the path
+                    success_paths[-1].append(link) # this link works
 
-        # Success transmission all along the path, we can stop here and return the result
-        if result is True:
-            return result
-
-    return result
+    return success_paths
 
 
 
@@ -136,6 +134,25 @@ def check_transmission_success(all_paths, route, link_failure_combination):
 # packet loss, and most importantly a formula which formulates the probability
 # calculation.
 def total_success_probability_calculation(bit_error_rate, packet_size, route):
+    all_combinations = enumerate_all_combinations(route)
+    all_paths = enumerate_all_paths('MCU-4', 'SGA', route)
+    p = get_link_success_probability(bit_error_rate, packet_size)
+
+
+    for combination in all_combinations :
+        result = check_transmission_success(all_paths, route, combination)
+        if len(result) > 0:
+            if len(result) == 1:
+                # Single path
+                return Decimal(p**len(result[0]))
+            if len(result) == 2:
+                # Two paths: IEEE 802.1CB = 2p^4-p^6
+                return Decimal((1-(1-p**len(result[0]))**2) + (1-(1-p**len(result[1]))**2))
+        else:
+            print('No working path')
+
+
+    total_success_probability = 0
     return total_success_probability
 
 
@@ -158,17 +175,9 @@ if __name__ == '__main__':
     # total_success_probability_calculation(10**(-12), 3200, network2_route)
     #
     # total_success_probability_calculation(10**(-10), 3200, network3_route)
-    # total_success_probability_calculation(10**(-12), 3200, network3_route)
+    getcontext().prec = 18
+    print(total_success_probability_calculation(10**(-12), 3200, network2_route))
 
-    combinations = enumerate_all_combinations(network1_route)
-    paths = enumerate_all_paths('MCU-4', 'SGA', network1_route)
 
-    # for c in combinations:
-    #     print(c)
-    print(len(paths))
-    for p in paths:
-        print(p)
-    print('')
-    print(check_transmission_success(paths, network1_route, combinations[-7]))
-    print(check_transmission_success(paths, network1_route, combinations[-20]))
+
 
