@@ -22,17 +22,67 @@ def enumerate_all_combinations(route):
 # can still be transmitted from source to destination. "route" contains all
 # the possible links related to a source to destination packet transmission.
 def check_transmission_success(source, destination, route, link_failure_combination):
-    path = []
+    paths = []
     for link in route:
         if link[0] == source:
-            path.append(link)
-            source = link[1]
+            new_path = Path(source, link[1], destination, route, None)
+            print('Before AddLink: ' + str(new_path.path))
+            new_path.add_link(link)
+            print('After AddLink: ' + str(new_path))
+            paths.append(new_path)
             if link[1] == destination:
                 print(route)
-                print(str(path))
+                print(str(paths))
+                return
+
+    print(str(len(paths)) + ' path(s) exist.')
+    for path in paths:
+         print(str(path.path))
+    #     #path.recursively_search()
 
 
+class Path:
 
+    legacy = ''
+    source = ''
+    destination = ''
+    route = []
+    path = []
+    children = []
+
+    def __int__(self, legacy, source, destination, route):
+        self.legacy = legacy
+        self.source = source
+        self.destination = destination
+        self.route = route
+
+    def __init__(self, legacy, source, destination, route, parent):
+        self.legacy = legacy
+        self.source = source
+        self.destination = destination
+        self.route = route
+        itertools.chain(self.path, parent)
+
+    def add_link(self, link):
+        print('Called AddLink')
+        self.path.append(link)
+
+    def recursively_search(self):
+        for link in self.route:
+            if link[0] == self.source:
+                new_path = Path(self.legacy, link[1], self.destination, self.route, self.path)
+                new_path.add_link(link)
+                self.children.append(new_path)
+            if link[1] == self.destination:
+                self.path.append(link)
+                print('stop!')
+                print(str(self.path))
+                return
+        for path in self.children:
+            path.recursively_search()
+
+    def __str__(self):
+        return '[source:' + self.source + '; path:' + str(self.path) + ']'
 
 
 # Given a packet of a certain size, the route that can be used to transmit the
@@ -67,6 +117,6 @@ if __name__ == '__main__':
     # total_success_probability_calculation(10**(-10), 3200, network3_route)
     # total_success_probability_calculation(10**(-12), 3200, network3_route)
 
-    combinations = enumerate_all_combinations(network2_route)
+    combinations = enumerate_all_combinations(network1_route)
     #for c in combinations:
-    check_transmission_success('MCU-4', 'SGA', network2_route, None)
+    check_transmission_success('MCU-4', 'SGA', network1_route, None)
