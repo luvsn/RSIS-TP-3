@@ -2,6 +2,13 @@ import collections
 import itertools
 from decimal import *
 
+#===================================================
+#
+#          Lucas VISINTIN - 0170665515
+#      RSIS - TP 3 - Reliability Evaluation
+#           Winter Semester 2021-2022
+#
+#===================================================
 
 class Path:
 
