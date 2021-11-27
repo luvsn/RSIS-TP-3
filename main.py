@@ -1,3 +1,4 @@
+import collections
 import itertools
 from decimal import *
 
@@ -138,21 +139,50 @@ def total_success_probability_calculation(bit_error_rate, packet_size, route):
     all_paths = enumerate_all_paths('MCU-4', 'SGA', route)
     p = get_link_success_probability(bit_error_rate, packet_size)
 
+    counter = []
 
     for combination in all_combinations :
         result = check_transmission_success(all_paths, route, combination)
+
+        # ======================
+        # If there exists success paths
+        # ======================
         if len(result) > 0:
-            if len(result) == 1:
-                # Single path
-                return Decimal(p**len(result[0]))
-            if len(result) == 2:
-                # Two paths: IEEE 802.1CB = 2p^4-p^6
-                return Decimal((1-(1-p**len(result[0]))**2) + (1-(1-p**len(result[1]))**2))
-        else:
-            print('No working path')
 
+            s = combination.count(1)
+            f = combination.count(0)
+            counter.append(tuple([s,f]))
 
+    # ======================
+    # Count occurences of same probability
+    # ======================
+    probs = {}
+    for i in counter:
+        exists = False
+        for j in probs:
+
+            # If already exists in probs
+            if str(i) == str(j):
+                probs[j] += 1
+                exists = True;
+                break;
+
+        # Add to probs
+        if not exists:
+            probs[i] = 1
+
+    print()
+    print('=====================================')
+    print('For packet size: ' + str(packet_size) + ', bit error rate: ' + str(bit_error_rate) + ', network: ' + str(route))
+    print('Success probability on a link: ' + str(p))
+    print('Formula: ')
     total_success_probability = 0
+    for key in probs:
+        print(str(probs[key]) + '*p^' + str(key[0]) + '*(1-p)^' + str(key[1]))
+        total_success_probability += Decimal(probs[key]*(p**key[0])*((1-p)**key[1]))
+    print('Source to destination transmission success probability: ' + str(total_success_probability))
+    print('Packet lost rate: ' + str(1-total_success_probability))
+    print('Average time between two packet losses (in hours): ' + str(((10/(1-total_success_probability))/1000)/3600))
     return total_success_probability
 
 
@@ -168,15 +198,16 @@ if __name__ == '__main__':
     # Add your code here, which calculates the success probability for frame transmission
     # from source to destination for different bit error rates, and different network architectures.
 
-    # total_success_probability_calculation(10**(-10), 3200, network1_route)
-    # total_success_probability_calculation(10**(-12), 3200, network1_route)
-    #
-    # total_success_probability_calculation(10**(-10), 3200, network2_route)
-    # total_success_probability_calculation(10**(-12), 3200, network2_route)
-    #
-    # total_success_probability_calculation(10**(-10), 3200, network3_route)
-    getcontext().prec = 18
-    print(total_success_probability_calculation(10**(-12), 3200, network2_route))
+    getcontext().prec = 28
+
+    total_success_probability_calculation(10**(-10), 3200, network1_route)
+    total_success_probability_calculation(10**(-12), 3200, network1_route)
+
+    total_success_probability_calculation(10**(-10), 3200, network2_route)
+    total_success_probability_calculation(10**(-12), 3200, network2_route)
+
+    total_success_probability_calculation(10**(-10), 3200, network3_route)
+    total_success_probability_calculation(10**(-12), 3200, network3_route)
 
 
 
