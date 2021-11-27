@@ -22,22 +22,17 @@ def enumerate_all_combinations(route):
 # can still be transmitted from source to destination. "route" contains all
 # the possible links related to a source to destination packet transmission.
 def check_transmission_success(source, destination, route, link_failure_combination):
-    print(link_failure_combination)
-    print(route)
     path = []
-    stop = False
-    a = source
-    while not stop:
-        for link in route:
-            if a in link[0]:
-                path.append(link)
-                a = link[1]
-                if link[1] == destination:
-                    stop = True
+    for link in route:
+        if link[0] == source:
+            path.append(link)
+            source = link[1]
+            if link[1] == destination:
+                print(route)
+                print(str(path))
 
-    print("Path: " + str(path))
-    print('')
-    #return result
+
+
 
 
 # Given a packet of a certain size, the route that can be used to transmit the
@@ -73,5 +68,5 @@ if __name__ == '__main__':
     # total_success_probability_calculation(10**(-12), 3200, network3_route)
 
     combinations = enumerate_all_combinations(network2_route)
-    for c in combinations:
-        check_transmission_success('MCU-4', 'SW_4', network2_route, c)
+    #for c in combinations:
+    check_transmission_success('MCU-4', 'SGA', network2_route, None)
