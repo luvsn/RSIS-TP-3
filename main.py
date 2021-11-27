@@ -41,16 +41,6 @@ class Path:
         return '[source:' + self.source + '; path:' + str(self.path) + ']'
 
 
-class Architecture:
-
-    combinations = None
-    paths = None
-
-    def __init__(self):
-        self.combinations = combinations
-        self.paths = paths
-
-
 # This function calculates the probability that a packet is successfully
 # transmitted over a link, based on the bit error rate and packet size.
 def get_link_success_probability(ber, packet_size):
@@ -89,6 +79,55 @@ def enumerate_all_paths(source, destination, route):
 
 
 
+# Given a link failure combination, it is possible to determine whether a packet
+# can still be transmitted from source to destination. "route" contains all
+# the possible links related to a source to destination packet transmission.
+def check_transmission_success(all_paths, route, link_failure_combination):
+
+    # Sanity check
+    if len(link_failure_combination) != len(route):
+        return False
+
+    result = False
+    map = {}
+
+    # Create a mapping from route to combination
+    for i in range(len(route)):
+           map[route[i]] = link_failure_combination[i]
+
+
+    # !
+    for m in map:
+        print(str(m) + ':' + str(map[m]))
+    # !
+
+    # ======================
+    # For each path from source to destination
+    # ======================
+    for path in all_paths:
+
+        # ======================
+        # For each link in this particular path
+        # ======================
+        for link in path:
+            m = map.get(link) # retrieve whether this link fails or not in this combination
+            if m is not None: # sanity check
+
+                if m == 0: # if link fails
+                    result = False # transmission failed at this link
+                    break # break the loop, a transmission fails as long as one link of the path fails
+
+                elif m == 1: # if the link does not fail
+                    result = True # transmission is correct until now, but might not remain correct along the path
+
+        # Success transmission all along the path, we can stop here and return the result
+        if result is True:
+            return result
+
+    return result
+
+
+
 # Given a packet of a certain size, the route that can be used to transmit the
 # packet from source to destination, and the bit error rate on each link, this
 # function calculates the probability that the packet can be transmitted
@@ -123,7 +162,13 @@ if __name__ == '__main__':
 
     combinations = enumerate_all_combinations(network1_route)
     paths = enumerate_all_paths('MCU-4', 'SGA', network1_route)
-    print(str(combinations))
-    print(str(paths))
-    #for c in combinations:
-    #check_transmission_success('MCU-4', 'SGA', network1_route, None)
+
+    # for c in combinations:
+    #     print(c)
+    print(len(paths))
+    for p in paths:
+        print(p)
+    print('')
+    print(check_transmission_success(paths, network1_route, combinations[-7]))
+    print(check_transmission_success(paths, network1_route, combinations[-20]))
+
